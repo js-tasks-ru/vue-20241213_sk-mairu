@@ -1,52 +1,47 @@
 import { defineComponent } from 'vue'
-import { getWeatherData, WeatherConditionIcons } from './weather.service.ts'
+import { getWeatherData } from './weather.service.ts'
 import './WeatherApp.css'
+
+import WeatherList from './WeatherList.js'
+
+function isNight(dt, sunrise, sunset) {
+  return dt < sunrise || dt > sunset
+}
+
+function convertKelvinToCelsius(kelvin) {
+  return (kelvin - 273.15).toFixed(1)
+}
+
+function converthPatommHg(hPa) {
+  return (hPa * 0.75).toFixed(0)
+}
+
+const weatherData = getWeatherData().map(item => {
+  const { current } = item
+  item.current.isNight = isNight(current.dt, current.sunrise, current.sunset)
+  item.current.temp = convertKelvinToCelsius(current.temp)
+  item.current.pressure = converthPatommHg(current.pressure)
+  return item
+})
 
 export default defineComponent({
   name: 'WeatherApp',
+
+  components: {
+    WeatherList,
+  },
+
+  setup() {
+    return {
+      weatherData,
+    }
+  },
 
   template: `
     <div>
       <h1 class="title">Погода в Средиземье</h1>
 
-      <ul class="weather-list unstyled-list">
-        <li class="weather-card weather-card--night">
-          <div class="weather-alert">
-            <span class="weather-alert__icon">⚠️</span>
-            <span class="weather-alert__description">Королевская метеослужба короля Арагорна II: Предвещается наступление сильного шторма.</span>
-          </div>
-          <div>
-            <h2 class="weather-card__name">
-              Гондор
-            </h2>
-            <div class="weather-card__time">
-              07:17
-            </div>
-          </div>
-          <div class="weather-conditions">
-            <div class="weather-conditions__icon" title="thunderstorm with heavy rain">⛈️</div>
-            <div class="weather-conditions__temp">15.0 °C</div>
-          </div>
-          <div class="weather-details">
-            <div class="weather-details__item">
-              <div class="weather-details__item-label">Давление, мм рт. ст.</div>
-              <div class="weather-details__item-value">754</div>
-            </div>
-            <div class="weather-details__item">
-              <div class="weather-details__item-label">Влажность, %</div>
-              <div class="weather-details__item-value">90</div>
-            </div>
-            <div class="weather-details__item">
-              <div class="weather-details__item-label">Облачность, %</div>
-              <div class="weather-details__item-value">100</div>
-            </div>
-            <div class="weather-details__item">
-              <div class="weather-details__item-label">Ветер, м/с</div>
-              <div class="weather-details__item-value">10.5</div>
-            </div>
-          </div>
-        </li>
-      </ul>
+      <WeatherList :weather="weatherData" />
     </div>
   `,
 })
